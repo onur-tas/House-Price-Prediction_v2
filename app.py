@@ -417,7 +417,7 @@ def main():
                 cluster_0_inputs_df = pd.DataFrame(cluster_0_inputs)
                 scaled_inputs = scaler_cluster_0.transform(cluster_0_inputs_df)
                 predicted_price = model_cluster_0.predict(scaled_inputs)
-                rmse_cluster = 110093
+                rmse_cluster = 110000
 
             elif house_cluster_prediction == 1:
                 cluster_1_inputs = {
@@ -430,7 +430,7 @@ def main():
                 cluster_1_inputs_df = pd.DataFrame(cluster_1_inputs)
                 scaled_inputs = scaler_cluster_1.transform(cluster_1_inputs_df)
                 predicted_price = model_cluster_1.predict(scaled_inputs)
-                rmse_cluster = 75277
+                rmse_cluster = 75000
 
             elif house_cluster_prediction == 2:
                 cluster_2_inputs = {
@@ -444,7 +444,7 @@ def main():
                 cluster_2_inputs_df = pd.DataFrame(cluster_2_inputs)
                 scaled_inputs = scaler_cluster_2.transform(cluster_2_inputs_df)
                 predicted_price = model_cluster_2.predict(scaled_inputs)
-                rmse_cluster = 256833
+                rmse_cluster = 115000
 
             else:
                 st.write("Cluster not found. Error in prediction.")
