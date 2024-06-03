@@ -13,27 +13,114 @@ import numpy as np
 from data_cleaning import get_zipcode, parse_zip_info, extract_density
 import folium
 import streamlit_folium as sf
+import torch
 
-# Function to load the trained models
 @st.cache_data
 def load_models():
-    # Load your trained models here
-    model_classification = joblib.load("model_classification_xgboost.pkl")
-    model_sentence = joblib.load("model_sentence.pkl")
-    model_cluster_0 = joblib.load('model_cluster_0_v2.pkl')
-    scaler_cluster_0 = joblib.load('scaler_cluster_0.pkl')
+    map_location = torch.device('cpu')
+    
+    # Check for CUDA (NVIDIA GPUs)
+    if torch.cuda.is_available():
+        map_location = torch.device('cuda')
+    
+    try:
+        model_classification = torch.load("model_classification__torch.pth", map_location=map_location)
+    except Exception as e:
+        st.error(f"Error loading model_classification: {e}")
+        model_classification = None
 
-    model_cluster_1 = joblib.load('model_cluster_1.pkl')
-    model_cluster_2 = joblib.load('model_cluster_2.pkl')
-    scaler_cluster_1 = joblib.load('scaler_cluster_1.pkl')
-    scaler_cluster_2 = joblib.load('scaler_cluster_2.pkl')
+    try:
+        model_sentence = torch.load("model_torch_sentence.pth", map_location=map_location)
+    except Exception as e:
+        st.error(f"Error loading model_sentence: {e}")
+        model_sentence = None
 
-    shoreline_data = gpd.read_file("full_water.geojson")
-    shoreline_data = shoreline_data[shoreline_data['SUBSET'] == 'Bigwater waterbody']  # Filter for the
+    try:
+        model_cluster_0 = torch.load('model_torch_cluster_0.pth', map_location=map_location)
+    except Exception as e:
+        st.error(f"Error loading model_cluster_0: {e}")
+        model_cluster_0 = None
 
-    # Reproject the shoreline data to EPSG:2926 (meters)
-    shoreline_data = shoreline_data.to_crs("EPSG:4326")
+    try:
+        scaler_cluster_0 = torch.load('scaler_torch_cluster_0.pth', map_location=map_location)
+    except Exception as e:
+        st.error(f"Error loading scaler_cluster_0: {e}")
+        scaler_cluster_0 = None
+
+    try:
+        model_cluster_1 = torch.load('model_torch_cluster_1.pth', map_location=map_location)
+    except Exception as e:
+        st.error(f"Error loading model_cluster_1: {e}")
+        model_cluster_1 = None
+
+    try:
+        model_cluster_2 = torch.load('model_torch_cluster_2.pth', map_location=map_location)
+    except Exception as e:
+        st.error(f"Error loading model_cluster_2: {e}")
+        model_cluster_2 = None
+
+    try:
+        scaler_cluster_1 = torch.load('scaler_torch_cluster_1.pth', map_location=map_location)
+    except Exception as e:
+        st.error(f"Error loading scaler_cluster_1: {e}")
+        scaler_cluster_1 = None
+
+    try:
+        scaler_cluster_2 = torch.load('scaler_torch_cluster_2.pth', map_location=map_location)
+    except Exception as e:
+        st.error(f"Error loading scaler_cluster_2: {e}")
+        scaler_cluster_2 = None
+
+    try:
+        shoreline_data = gpd.read_file("full_water.geojson")
+        shoreline_data = shoreline_data[shoreline_data['SUBSET'] == 'Bigwater waterbody']  # Filter for the
+        shoreline_data = shoreline_data.to_crs("EPSG:4326")  # Reproject the shoreline data to EPSG:4326 (meters)
+    except Exception as e:
+        st.error(f"Error loading shoreline_data: {e}")
+        shoreline_data = None
+
     return model_classification, model_sentence, model_cluster_0, scaler_cluster_0, model_cluster_1, model_cluster_2, scaler_cluster_1, scaler_cluster_2, shoreline_data
+
+# Load the models and data
+models_and_data = load_models()
+if models_and_data:
+    model_classification, model_sentence, model_cluster_0, scaler_cluster_0, model_cluster_1, model_cluster_2, scaler_cluster_1, scaler_cluster_2, shoreline_data = models_and_data
+else:
+    st.error("Failed to load models and data.")
+
+
+# # Function to load the trained models
+# @st.cache_data
+# def load_models():
+#     map_location = torch.device('cpu')
+    
+#     # Check for CUDA (NVIDIA GPUs)
+#     if torch.cuda.is_available():
+#         map_location = torch.device('cuda')
+#     # Check for MPS (Apple Silicon GPUs)
+#     elif hasattr(torch.backends, 'mps') and torch.backends.mps.is_available():
+#         map_location = torch.device('mps')
+#     # Load your trained models here
+#     try:
+#         model_classification = joblib.load("model_classification_xgboost.pkl")
+#         model_sentence = joblib.load("model_sentence.pkl")
+#         model_cluster_0 = joblib.load('model_cluster_0_v2.pkl')
+#         scaler_cluster_0 = joblib.load('scaler_cluster_0.pkl')
+
+#         model_cluster_1 = joblib.load('model_cluster_1.pkl')
+#         model_cluster_2 = joblib.load('model_cluster_2.pkl')
+#         scaler_cluster_1 = joblib.load('scaler_cluster_1.pkl')
+#         scaler_cluster_2 = joblib.load('scaler_cluster_2.pkl')
+#     except Exception as e:
+#         st.error(f"Error loading model_sentence: {e}")
+#         return None
+
+#     shoreline_data = gpd.read_file("full_water.geojson")
+#     shoreline_data = shoreline_data[shoreline_data['SUBSET'] == 'Bigwater waterbody']  # Filter for the
+
+#     # Reproject the shoreline data to EPSG:2926 (meters)
+#     shoreline_data = shoreline_data.to_crs("EPSG:4326")
+#     return model_classification, model_sentence, model_cluster_0, scaler_cluster_0, model_cluster_1, model_cluster_2, scaler_cluster_1, scaler_cluster_2, shoreline_data
 
 @st.cache_data
 def load_dfs():
