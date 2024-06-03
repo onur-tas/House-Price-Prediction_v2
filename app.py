@@ -14,6 +14,7 @@ from data_cleaning import get_zipcode, parse_zip_info, extract_density
 import folium
 import streamlit_folium as sf
 import torch
+from geopy.exc import GeocoderUnavailable, GeocoderTimedOut
 
 @st.cache_data
 def load_models():
@@ -263,9 +264,29 @@ def fetch_address(street, city, province, country):
         if street == None:
             return None
     # Find Lat and Long of the address
-        geolocator = Nominatim(user_agent="GTA Lookup")
+        # geolocator = Nominatim(user_agent="GTA Lookup")
+        # geocode = RateLimiter(geolocator.geocode, min_delay_seconds=1)
+        # location = geolocator.geocode(street+", "+city+", "+province+", "+country)
+
+        geolocator = Nominatim(user_agent="GTA_Lookup")
         geocode = RateLimiter(geolocator.geocode, min_delay_seconds=1)
-        location = geolocator.geocode(street+", "+city+", "+province+", "+country)
+        
+        # Try to get the location with retries
+        for attempt in range(5):  # Retry up to 5 times
+            try:
+                location = geolocator.geocode(f"{street}, {city}, {province}, {country}")
+                if location is not None:
+                    continue
+            except (GeocoderUnavailable, GeocoderTimedOut):
+                time.sleep(2)  # Wait before retrying
+                st.error("Unable to fetch the location due to rate limiting. Trying again.")
+            except Exception as e:
+                st.error("Unable to fetch the location due to rate limiting. Please try again later.")
+                print(f"Unexpected error: {e}")
+                return "Rate", None, None, None, None, None, None
+        
+        #return None, None
+            
 
         if location is None:
             return None, None, None, None, None, None, None
@@ -353,8 +374,12 @@ def main():
 
     else:
         address = fetch_address(street, city, province, country)
-        if  app_mode == "Enter your House" and address[0] is None:
-            st.write("Address not found. Please check the address.")
+        print (address)
+        if  app_mode == "Enter your House" and (address[0] == None or address[0] == "Rate"):
+            if address[0] is "Rate":
+                st.write("Unable to fetch the location due to rate limiting. Please try again later.")
+            else:
+                st.write("Address not found. Please check the address.")
         else:
             if app_mode == "Enter your House":
                 lat, long, distance_to_station, zipcode, population, density, commute_time, location = fetch_address(street, city, province, country)
