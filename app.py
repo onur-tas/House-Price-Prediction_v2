@@ -280,6 +280,9 @@ def fetch_address(street, city, province, country):
             except (GeocoderUnavailable, GeocoderTimedOut):
                 time.sleep(2)  # Wait before retrying
                 st.error("Unable to fetch the location due to rate limiting. Trying again.")
+                if attempt == 5:
+                    st.error("Unable to fetch the location due to rate limiting. Please try again later.")
+                    return "Rate", None, None, None, None, None, None
             except Exception as e:
                 st.error("Unable to fetch the location due to rate limiting. Please try again later.")
                 print(f"Unexpected error: {e}")
